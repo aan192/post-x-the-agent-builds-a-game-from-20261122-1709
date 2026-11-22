@@ -3,21 +3,21 @@ import subprocess, os
 # 1. Create hook video (3s)
 subprocess.run([
     "ffmpeg", "-y", "-f", "lavfi", "-i", "color=c=0x11081c:s=1080x1920:r=30:d=3",
-    "-vf", "drawtext=text='One prompt. \\n One game. \\n Watch my agent build it.':fontcolor=white:fontsize=64:x=(w-text_w)/2:y=(h-text_h)/2:line_spacing=20",
+    "-vf", "drawtext=textfile=work/hook.txt:fontcolor=white:fontsize=48:x=(w-text_w)/2:y=(h-text_h)/2:line_spacing=20",
     "-c:v", "libx264", "-pix_fmt", "yuv420p", "work/seg1_hook.mp4"
 ], check=True)
 
 # 2. Create prompt video (4s)
 subprocess.run([
     "ffmpeg", "-y", "-f", "lavfi", "-i", "color=c=0x190a2a:s=1080x1920:r=30:d=4",
-    "-vf", "drawtext=text='Prompt\\: Gopher Firework Rug. \\n Catch falling fireworks!':fontcolor=white:fontsize=52:x=(w-text_w)/2:y=(h-text_h)/2:line_spacing=20",
+    "-vf", "drawtext=textfile=work/prompt_text.txt:fontcolor=white:fontsize=48:x=(w-text_w)/2:y=(h-text_h)/2:line_spacing=20",
     "-c:v", "libx264", "-pix_fmt", "yuv420p", "work/seg2_prompt.mp4"
 ], check=True)
 
 # 3. Create agent working video (5s)
 subprocess.run([
     "ffmpeg", "-y", "-f", "lavfi", "-i", "color=c=0x11081c:s=1080x1920:r=30:d=5",
-    "-vf", "drawtext=text='Agent Working... \\n Writing HTML5 Canvas \\n & Auto-Play Demo AI':fontcolor=white:fontsize=52:x=(w-text_w)/2:y=(h-text_h)/2:line_spacing=20",
+    "-vf", "drawtext=textfile=work/agent_text.txt:fontcolor=white:fontsize=48:x=(w-text_w)/2:y=(h-text_h)/2:line_spacing=20",
     "-c:v", "libx264", "-pix_fmt", "yuv420p", "work/seg3_agent.mp4"
 ], check=True)
 
