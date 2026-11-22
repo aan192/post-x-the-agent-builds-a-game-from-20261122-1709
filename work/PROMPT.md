@@ -1,0 +1,1 @@
+Create a fast-paced arcade game called Gopher Firework Rug where a cute gopher catches falling colorful fireworks on a magical rug to score points, featuring smooth canvas graphics, particle explosions, increasing difficulty, score tracking, lives, game-over screen, keyboard & touch controls, and an auto-play demo mode.

@@ -1,0 +1,5 @@
+file 'seg1_hook.mp4'
+file 'seg2_prompt.mp4'
+file 'seg3_agent.mp4'
+file 'seg4_gameplay.mp4'
+file 'seg5_endcard.mp4'

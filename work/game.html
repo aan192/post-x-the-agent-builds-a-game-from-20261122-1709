@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gopher Firework Rug - make.fun</title>
+    <style>
+        body {
+            margin: 0;
+            background: #11081c;
+            color: #fff;
+            font-family: 'Inter', system-ui, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        canvas {
+            background: linear-gradient(to bottom, #190a2a, #2d1245);
+            border: 4px solid #c41c83;
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(196, 28, 131, 0.4);
+        }
+        .ui {
+            position: absolute;
+            top: 20px;
+            display: flex;
+            gap: 30px;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="ui">
+        <div>SCORE: <span id="score">0</span></div>
+        <div>LIVES: <span id="lives">3</span></div>
+        <div>MODE: <span id="mode" style="color: #c41c83;">AUTO-PLAY</span></div>
+    </div>
+    <canvas id="gameCanvas" width="540" height="960"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let score = 0;
+        let lives = 3;
+        let gameOver = false;
+        let demoMode = true;
+
+        const player = {
+            x: canvas.width / 2 - 60,
+            y: canvas.height - 120,
+            width: 120,
+            height: 40,
+            speed: 10,
+            dx: 0
+        };
+
+        let items = [];
+        let particles = [];
+        let itemTimer = 0;
+
+        const colors = ['#c41c83', '#ff33a1', '#ffaa00', '#00ffcc', '#9900ff'];
+
+        window.addEventListener('keydown', e => {
+            demoMode = false;
+            document.getElementById('mode').innerText = 'MANUAL';
+            if (e.key === 'ArrowLeft' || e.key === 'a') player.dx = -player.speed;
+            if (e.key === 'ArrowRight' || e.key === 'd') player.dx = player.speed;
+        });
+
+        window.addEventListener('keyup', e => {
+            if ((e.key === 'ArrowLeft' || e.key === 'a') && player.dx < 0) player.dx = 0;
+            if ((e.key === 'ArrowRight' || e.key === 'd') && player.dx > 0) player.dx = 0;
+        });
+
+        canvas.addEventListener('mousemove', e => {
+            demoMode = false;
+            document.getElementById('mode').innerText = 'MANUAL';
+            const rect = canvas.getBoundingClientRect();
+            player.x = (e.clientX - rect.left) * (canvas.width / rect.width) - player.width / 2;
+        });
+
+        function spawnItem() {
+            items.push({
+                x: Math.random() * (canvas.width - 40) + 20,
+                y: -40,
+                radius: 20 + Math.random() * 10,
+                speed: 4 + Math.random() * 4,
+                color: colors[Math.floor(Math.random() * colors.length)]
+            });
+        }
+
+        function createExplosion(x, y, color) {
+            for (let i = 0; i < 15; i++) {
+                particles.push({
+                    x, y,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    life: 30,
+                    color
+                });
+            }
+        }
+
+        function update() {
+            if (gameOver) return;
+
+            // Demo AI
+            if (demoMode && items.length > 0) {
+                let target = items.reduce((prev, curr) => curr.y > prev.y ? curr : prev, items[0]);
+                let targetX = target.x - player.width / 2;
+                if (player.x < targetX) player.x += Math.min(player.speed, targetX - player.x);
+                if (player.x > targetX) player.x -= Math.min(player.speed, player.x - targetX);
+            }
+
+            player.x += player.dx;
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+            itemTimer++;
+            if (itemTimer > 35) {
+                spawnItem();
+                itemTimer = 0;
+            }
+
+            for (let i = items.length - 1; i >= 0; i--) {
+                let item = items[i];
+                item.y += item.speed;
+
+                // Collision with rug
+                if (
+                    item.y + item.radius >= player.y &&
+                    item.y - item.radius <= player.y + player.height &&
+                    item.x >= player.x &&
+                    item.x <= player.x + player.width
+                ) {
+                    score += 10;
+                    createExplosion(item.x, item.y, item.color);
+                    items.splice(i, 1);
+                    document.getElementById('score').innerText = score;
+                    continue;
+                }
+
+                // Missed
+                if (item.y > canvas.height + 50) {
+                    items.splice(i, 1);
+                    lives--;
+                    document.getElementById('lives').innerText = lives;
+                    if (lives <= 0) {
+                        gameOver = true;
+                    }
+                }
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw background stars
+            ctx.fillStyle = '#ffffff22';
+            for (let i = 0; i < 50; i++) {
+                ctx.fillRect((i * 37) % canvas.width, (i * 73 + Date.now() * 0.02) % canvas.height, 2, 2);
+            }
+
+            // Draw Rug (Player)
+            ctx.fillStyle = '#c41c83';
+            ctx.beginPath();
+            ctx.roundRect(player.x, player.y, player.width, player.height, 15);
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Draw Gopher ears/head on rug
+            ctx.fillStyle = '#ffaa00';
+            ctx.beginPath();
+            ctx.arc(player.x + player.width/2, player.y - 10, 22, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Draw Items (Fireworks)
+            for (let item of items) {
+                ctx.fillStyle = item.color;
+                ctx.beginPath();
+                ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            // Draw Particles
+            for (let p of particles) {
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, 4, 4);
+            }
+
+            if (gameOver) {
+                ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 48px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2 - 20);
+                ctx.font = '24px Inter';
+                ctx.fillStyle = '#c41c83';
+                ctx.fillText('Final Score: ' + score, canvas.width/2, canvas.height/2 + 30);
+            }
+        }
+
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+    </script>
+</body>
+</html>
