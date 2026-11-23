@@ -23,6 +23,16 @@ function main() {
     fs.writeFileSync(destPath, JSON.stringify(defaultPost, null, 2));
   }
 
+  // Read the copied POST.json back and make sure the post URL it carries is
+  // a real X/Twitter status address before this entry goes anywhere.
+  const copied = JSON.parse(fs.readFileSync(destPath, 'utf8'));
+  const postUrl = typeof copied.url === 'string' ? copied.url.trim() : '';
+  const statusPattern = /^https?:\/\/(www\.)?(x\.com|twitter\.com)\/[^/]+\/status\/\d+([/?#].*)?$/;
+  if (!statusPattern.test(postUrl)) {
+    throw new Error(`POST.json post URL is missing or malformed: ${JSON.stringify(copied.url)}`);
+  }
+  console.log(`Verified X post URL: ${postUrl}`);
+
   console.log(`Successfully copied POST.json to ${destPath}`);
 }
 
